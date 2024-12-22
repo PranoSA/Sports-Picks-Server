@@ -8,7 +8,6 @@ import db from '../db';
 
 import { TableNames, GameTableColumns } from '../tables';
 
-
 const getGames = async (req: Request, res: Response) => {
   const { year_id, week_id } = req.params;
   const games = await db(TableNames.Game_Table)
@@ -41,8 +40,12 @@ const getCurrentWeekGames = async (req: Request, res: Response) => {
     .andWhere('end_date', '>=', current_date)
     .first();
 
+  console.log('week', week);
+
   //get games
   const games = await db(TableNames.Game_Table).where('week_id', week.week_id);
+
+  console.log('games', games);
 
   res.json(games);
 };

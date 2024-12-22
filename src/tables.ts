@@ -1,5 +1,5 @@
 const TableNames = {
-  User_Table: 'Users',
+  User_Table: 'User_Table',
   Group_Table: 'Groups',
   Group_User_Table: 'Group_Users',
   // Bet_Table: 'Bets',
@@ -100,6 +100,22 @@ const ComputedResultsTableColumns = {
   points: 'points', //number
 };
 
+/*
+    table.uuid('user_id').primary();
+    table.string('username').notNullable();
+    table.string('full_name').notNullable();
+    table.string('email').notNullable();
+    table.time('last_activity').notNullable();
+    */
+
+const UserTableColumns = {
+  user_id: 'user_id',
+  username: 'username',
+  full_name: 'full_name',
+  email: 'email',
+  last_activity: 'last_activity',
+};
+
 export {
   TableNames,
   YearTableColumns,
@@ -109,4 +125,5 @@ export {
   GroupUserTableColumns,
   // BetTableColumns,
   PickTableColumns,
+  UserTableColumns,
 };

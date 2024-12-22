@@ -10,7 +10,7 @@ and rename "pick" to "choice" in the Pick Table
 */
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(TableNames.Pick_Table, (table) => {
+  /*await knex.schema.alterTable(TableNames.Pick_Table, (table) => {
     table.renameColumn(PickTableColumns.pick, PickTableColumns.choice);
   });
 
@@ -25,7 +25,7 @@ export async function up(knex: Knex): Promise<void> {
     table
       .foreign('week_id')
       .references(`${TableNames.Week_Table}.${WeekTableColumns.week_id}`);
-  });
+  });*/
 }
 
 export async function down(knex: Knex): Promise<void> {

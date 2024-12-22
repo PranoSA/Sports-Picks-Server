@@ -123,12 +123,21 @@ const addPicks = async (req: Request, res: Response) => {
       //.where('week_id', week_id) //week is inferred from the game_id
       .andWhere('bet_id', pick.bet_id)
       .andWhere('user_id', user_id)
+      //and where there was a game_id in games.id
+      .whereIn(
+        'game_id',
+        games.map((game) => game.game_id)
+      )
+
       //.andWhere('group_id', group_id) not per group?
       .first();
 
     // get the game corresponding to the old pick
     if (old_pick) {
       const game = games.find((game) => game.game_id === old_pick.game_id);
+      console.log('game', game);
+      console.log("old_pick['game_id']", old_pick['game_id']);
+      console.log('Games', games);
       //make sure the game is not in the past
       const old_kickoff = new Date(game.kickoff);
       if (old_kickoff < new Date()) {
@@ -185,12 +194,21 @@ const getCurrentWeekPicks = async (req: Request, res: Response) => {
 
   let user_id = res.locals.user;
 
+  const current_games = await getCurrentWeekGames();
+
   try {
     const picks = await db(TableNames.Pick_Table)
       //.where('group_id', group_id)
       .andWhere('user_id', user_id);
 
-    res.send(picks);
+    //filter out picks corresponding to games that are not in the current week
+    const picks_for_current_week = picks.filter((pick) =>
+      current_games.find((game) => game.game_id === pick.game_id)
+    );
+
+    res.send(picks_for_current_week);
+
+    //res.send(picks);
   } catch (error) {
     console.log('error', error);
     res.sendStatus(500);

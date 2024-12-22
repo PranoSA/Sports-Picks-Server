@@ -4,9 +4,11 @@ import {
   TableNames,
   WeekTableColumns,
   YearTableColumns,
+  UserTableColumns,
 } from '../tables';
 
 import { Request, Response } from 'express';
+
 /**
 
 */
@@ -218,13 +220,51 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
     }, 0);
 
     return {
+      week: week_id,
       user_id: user.user_id,
       score: user_score,
       potential: user_pending_scores,
     };
   });
 
+  const user_info_promises = scores.map((user) => {
+    const userinner = getUserInfoFromId(user.user_id);
+    console.log('userinner', userinner);
+    if (!userinner) {
+      console.log("Couldn't find user with id", user.user_id);
+      return {
+        user_id: user.user_id,
+        username: user.user_id,
+      };
+    }
+    return userinner;
+  });
+  const user_infos = await Promise.all(user_info_promises);
+
+  console.log('user_infos', user_infos);
+
+  scores.forEach((user, index) => {
+    user.user_id = user_infos.find(
+      (info) => info.user_id === user.user_id
+    ).username;
+  });
+
   return scores;
+};
+
+const getUserInfoFromId = async (user_id: string) => {
+  const user = await db(TableNames.User_Table)
+    .where('user_id', user_id)
+    .first();
+
+  if (!user) {
+    return {
+      user_id: user_id,
+      username: user_id,
+    };
+  }
+
+  return user;
 };
 
 const getScoresForAllWeeks = async (group_id: string) => {
@@ -254,6 +294,17 @@ const getTotalScores = async (group_id: string) => {
 
     return acc;
   }, []);
+
+  //replace user_id with user.username using getUserInfoFromId
+  const user_info_promises = total_scores.map((user) =>
+    getUserInfoFromId(user.user_id)
+  );
+
+  const user_info = await Promise.all(user_info_promises);
+
+  total_scores.forEach((user, index) => {
+    user.user_id = user_info.find((info) => info.user_id === user.user_id);
+  });
 
   return total_scores;
 };

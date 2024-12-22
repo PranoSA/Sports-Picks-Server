@@ -149,6 +149,8 @@ const updateGamesAutomatically = async () => {
 
   const data = await res.json();
 
+  console.log('data', data);
+
   //clear gmaes for the current time period
   await db(TableNames.Game_Table)
     .delete()
@@ -174,6 +176,8 @@ const updateGamesAutomatically = async () => {
     }
 
     const game_start = new Date(game.commence_time);
+
+    console.log('weekend', week);
 
     if (game_start >= week.start_date && game_start <= week.end_date) {
       //check if the game is already in the database

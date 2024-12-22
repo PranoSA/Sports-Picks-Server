@@ -32,7 +32,7 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin : ['http://localhost:3000', 'https://sports_picks.compressibleflowcalculator.com'],
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
@@ -41,12 +41,6 @@ app.use(
 app.get('/', (req, res) => {
   res.send('Hello, world!');
 });
-
-app.get('/api/v1/admin/automatic_updates', handleAutomaticUpdates);
-
-app.get('/api/v1/years', getYears);
-app.post('/api/v1/years', addYear);
-app.delete('/api/v1/years/:year_id', deleteYear);
 
 //weeks
 import {
@@ -77,7 +71,68 @@ const auth_middleware: RequestHandler = async (
     //set the user in the request context
     //not the body, but the request object
     res.locals.user = decoded.payload.sub;
+
+    var any_decoded = decoded as any;
+
+    console.log('Any Decoded', any_decoded);
+
+    const UserObject = {
+      [UserTableColumns.user_id]: any_decoded.payload.sub,
+      [UserTableColumns.full_name]: any_decoded.payload.name,
+      [UserTableColumns.email]: any_decoded.payload.email,
+      [UserTableColumns.username]: any_decoded.payload.preferred_username,
+      [UserTableColumns.last_activity]: new Date(),
+    };
+
+    //create an object with the columns of the user
+    const user_in_database = await db(TableNames.User_Table)
+      .where('user_id', res.locals.user)
+      .first();
+
+    console.log('User In Database', user_in_database);
+
+    // Check if any fields have changed or if the user is not in the database
+    if (
+      !user_in_database ||
+      user_in_database.username !== UserObject.username ||
+      user_in_database.user_id !== UserObject.user_id ||
+      new Date(user_in_database.last_login).getTime() + 2 * 60 * 1000 <
+        new Date().getTime()
+    ) {
+      console.log('User Object', UserObject);
+      await db(TableNames.User_Table)
+        .insert(UserObject)
+        .onConflict('user_id')
+        .merge(UserObject);
+    }
+
     //res.locals.email = decoded.payload.
+
+    /*
+  "resource_access": {
+    "sports-picks-clients": {
+      "roles": [
+        "Sports Clients Admin"
+      ]
+    },
+  },
+  */
+
+    //@ts-ignore
+    const reaource_access_roles =
+      //@ts-ignore
+      decoded.payload.resource_access?.['sports-picks-clients']?.roles;
+
+    console.log('Resource Access Roles', reaource_access_roles);
+
+    if (reaource_access_roles) {
+      const is_admin = reaource_access_roles.includes('Sports Clients Admin');
+      res.locals.is_admin = is_admin;
+    }
+
+    //const is_admin;
+
+    console.log('Is Admin?', res.locals.is_admin);
 
     //@ts-ignore
     if (decoded.payload.email) {
@@ -107,28 +162,6 @@ const auth_middleware: RequestHandler = async (
 };
 
 app.use(auth_middleware);
-
-app.get('/api/v1/weeks/current_year', getWeekForCurrentYear);
-app.get('/api/v1/weeks/:year_id', getWeeks);
-app.post('/api/v1/weeks', addWeeks);
-app.delete('/api/v1/weeks/:week_id/:year_id', deleteWeek);
-app.put('/api/v1/weeks/:week_id', deleteWeek);
-
-//games
-import {
-  getGames,
-  addGames,
-  deleteGame,
-  getCurrentWeekGames,
-  submitFinalScore,
-} from './routes/games';
-
-app.post('/api/v1/games', addGames);
-app.post('/api/v1/games/:game_id', submitFinalScore);
-app.delete('/api/v1/games/:game_id', deleteGame);
-app.get('/api/v1/games/current', getCurrentWeekGames);
-app.get('/api/v1/games/:year_id/:week_id', getGames);
-//groups
 
 import {
   getGroups,
@@ -163,6 +196,59 @@ app.get('/api/v1/scores/:group_id/:week_id', scoresForWeekHandler);
 
 // games
 
+/**
+Admin Routes:
+Editing / Adding Years
+Editing / Adding Weeks
+Editing / Adding Games
+*/
+
+const checkIsAdmin: RequestHandler = (req, res, next) => {
+  if (!res.locals.is_admin) {
+    res.status(401).send('Not authorized');
+    return;
+  }
+
+  next();
+};
+
+app.get('/api/v1/is_admin', (req, res) => {
+  res.json({ is_admin: res.locals.is_admin });
+});
+
+app.get(
+  '/api/v1/admin/automatic_updates',
+  checkIsAdmin,
+  handleAutomaticUpdates
+);
+
+app.get('/api/v1/years', getYears);
+app.post('/api/v1/years', checkIsAdmin, addYear);
+app.delete('/api/v1/years/:year_id', checkIsAdmin, deleteYear);
+
+app.get('/api/v1/weeks/current_year', getWeekForCurrentYear);
+app.get('/api/v1/weeks/:year_id', getWeeks);
+app.post('/api/v1/weeks', checkIsAdmin, addWeeks);
+app.delete('/api/v1/weeks/:week_id/:year_id', checkIsAdmin, deleteWeek);
+app.put('/api/v1/weeks/:week_id', checkIsAdmin, deleteWeek);
+
+//games
+import {
+  getGames,
+  addGames,
+  deleteGame,
+  getCurrentWeekGames,
+  submitFinalScore,
+} from './routes/games';
+import { TableNames, UserTableColumns } from './tables';
+
+app.post('/api/v1/games', checkIsAdmin, addGames);
+app.post('/api/v1/games/:game_id', checkIsAdmin, submitFinalScore);
+app.delete('/api/v1/games/:game_id', checkIsAdmin, deleteGame);
+app.get('/api/v1/games/current', getCurrentWeekGames);
+app.get('/api/v1/games/:year_id/:week_id', getGames);
+
+//groups
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
