@@ -32,7 +32,10 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin : ['http://localhost:3000', 'https://sports_picks.compressibleflowcalculator.com'],
+    origin: [
+      'http://localhost:3000',
+      'https://sportspicks.compressibleflowcalculator.com',
+    ],
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
