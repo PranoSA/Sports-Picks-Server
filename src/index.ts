@@ -159,7 +159,6 @@ const auth_middleware: RequestHandler = async (
 
     next();
   } catch (error) {
-    console.log('Error verifying token 2', error);
     res.status(401).send('invalid token...');
   }
 };
