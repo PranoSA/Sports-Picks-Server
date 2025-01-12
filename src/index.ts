@@ -127,7 +127,9 @@ const auth_middleware: RequestHandler = async (
 
       //check if the header "Alternative_UUID is set if the user is an admin"
       if (is_admin) {
+        console.log('Admin Incoming Request');
         const alt_uuid = req.headers['alternative_uuid'];
+        console.log("Alternative User's UUID", alt_uuid);
         if (alt_uuid) {
           console.log("Alternative User's UUID", alt_uuid);
           res.locals.user = alt_uuid;
