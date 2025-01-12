@@ -1,5 +1,7 @@
 import { GameTableColumns, GroupTableColumns, TableNames } from '../tables';
 
+Error.stackTraceLimit = 50;
+
 import db from '../db';
 
 import { Request, Response } from 'express';
@@ -12,6 +14,9 @@ const getCurrentWeekId = async () => {
     .where('start_date', '<=', current_date)
     .andWhere('end_date', '>=', current_date)
     .first();
+  if (!week) {
+    return '1';
+  }
   return week.week_id;
 };
 
@@ -526,9 +531,18 @@ const calculateScoresForWeek = async (
 
   const group_members = await getMembersOfGroup(group_id);
 
-  const picks = await db(TableNames.Pick_Table).whereIn(
+  const unfiltered_picks = await db(TableNames.Pick_Table).whereIn(
     'user_id',
     group_members.map((member) => member.user_id)
+  );
+
+  //filter picks so only one of a particular bet_id is present
+  const picks = unfiltered_picks.filter(
+    (pick, index, self) =>
+      index ===
+      self.findIndex(
+        (t) => t.bet_id === pick.bet_id && t.user_id === pick.user_id
+      )
   );
 
   console.log('picks', picks);
@@ -641,6 +655,8 @@ const calculateWeeklyScores = async (
       return calculateScoresForWeek(group_id, week.week_id);
     })
   );
+
+  //
 
   console.log('scores', scores);
 

@@ -51,7 +51,6 @@ function getKey(
   header: jwt.JwtHeader,
   callback: ((arg0: null, arg1: any) => void) | undefined
 ) {
-  console.log('Called GetKey');
   if (!header.kid) {
     throw new Error('JWT header does not contain kid');
   }

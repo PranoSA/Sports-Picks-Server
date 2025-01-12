@@ -164,7 +164,8 @@ const joinGroup = async (req: Request, res: Response) => {
         user_id,
         group_id
       );
-      res.sendStatus(400);
+      //set "Already a member" status
+      res.sendStatus(409);
       return;
     }
 

@@ -37,7 +37,7 @@ app.use(
       'https://sportspicks.compressibleflowcalculator.com',
     ],
     methods: ['GET', 'POST', 'DELETE', 'PUT', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Alternative_UUID'],
   })
 );
 
@@ -77,8 +77,6 @@ const auth_middleware: RequestHandler = async (
 
     var any_decoded = decoded as any;
 
-    console.log('Any Decoded', any_decoded);
-
     const UserObject = {
       [UserTableColumns.user_id]: any_decoded.payload.sub,
       [UserTableColumns.full_name]: any_decoded.payload.name,
@@ -92,8 +90,6 @@ const auth_middleware: RequestHandler = async (
       .where('user_id', res.locals.user)
       .first();
 
-    console.log('User In Database', user_in_database);
-
     // Check if any fields have changed or if the user is not in the database
     if (
       !user_in_database ||
@@ -102,7 +98,6 @@ const auth_middleware: RequestHandler = async (
       new Date(user_in_database.last_login).getTime() + 2 * 60 * 1000 <
         new Date().getTime()
     ) {
-      console.log('User Object', UserObject);
       await db(TableNames.User_Table)
         .insert(UserObject)
         .onConflict('user_id')
@@ -126,16 +121,21 @@ const auth_middleware: RequestHandler = async (
       //@ts-ignore
       decoded.payload.resource_access?.['sports-picks-clients']?.roles;
 
-    console.log('Resource Access Roles', reaource_access_roles);
-
     if (reaource_access_roles) {
       const is_admin = reaource_access_roles.includes('Sports Clients Admin');
       res.locals.is_admin = is_admin;
+
+      //check if the header "Alternative_UUID is set if the user is an admin"
+      if (is_admin) {
+        const alt_uuid = req.headers['alternative_uuid'];
+        if (alt_uuid) {
+          console.log("Alternative User's UUID", alt_uuid);
+          res.locals.user = alt_uuid;
+        }
+      }
     }
 
     //const is_admin;
-
-    console.log('Is Admin?', res.locals.is_admin);
 
     //@ts-ignore
     if (decoded.payload.email) {
@@ -242,9 +242,11 @@ import {
   deleteGame,
   getCurrentWeekGames,
   submitFinalScore,
+  getGamesByWeek,
 } from './routes/games';
 import { TableNames, UserTableColumns } from './tables';
 
+app.get('/api/v1/games/weeks/:week_id', getGamesByWeek);
 app.post('/api/v1/games', checkIsAdmin, addGames);
 app.post('/api/v1/games/:game_id', checkIsAdmin, submitFinalScore);
 app.delete('/api/v1/games/:game_id', checkIsAdmin, deleteGame);

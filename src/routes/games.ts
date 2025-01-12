@@ -103,10 +103,25 @@ const submitFinalScore = async (req: Request, res: Response) => {
   res.json(new_game).status(200);
 };
 
+const getGamesByWeek = async (req: Request, res: Response) => {
+  console.log('getGamesByWeek');
+  const { week_id } = req.params;
+
+  const games = await db(TableNames.Game_Table).where(
+    GameTableColumns.week_id,
+    week_id
+  );
+
+  console.log('games', games);
+
+  res.json(games);
+};
+
 export {
   getGames,
   addGames,
   deleteGame,
   getCurrentWeekGames,
   submitFinalScore,
+  getGamesByWeek,
 };

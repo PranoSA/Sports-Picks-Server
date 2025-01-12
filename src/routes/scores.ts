@@ -29,8 +29,6 @@ const useGetWeeksForCurrentYear = async () => {
     year.year_id
   );
 
-  console.log('weeks', weeks);
-
   return weeks;
 };
 
@@ -92,10 +90,6 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
   const scores = users.map((user) => {
     const user_picks = picks.filter((pick) => pick.user_id === user.user_id);
 
-    console.log('user_picks', user_picks);
-
-    console.log('week_id', week_id);
-
     const user_score = user_picks.reduce((acc, pick) => {
       const game = games_for_week.find((game) => game.game_id === pick.game_id);
 
@@ -112,8 +106,6 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
       if (!bet) {
         return acc;
       }
-
-      console.log('game', game);
 
       let result = false;
       let points = 0;
@@ -164,11 +156,6 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
         points = bet.num_points;
       }
 
-      console.log('pick', pick.pick);
-      console.log('result', result);
-      console.log('bet type', bet.type);
-      console.log('points', points);
-
       if (result === pick.pick) {
         //determin
         return acc + points;
@@ -195,8 +182,6 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
       if (!bet) {
         return acc;
       }
-
-      console.log('game', game);
 
       let points = 0;
 
@@ -229,9 +214,8 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
 
   const user_info_promises = scores.map((user) => {
     const userinner = getUserInfoFromId(user.user_id);
-    console.log('userinner', userinner);
+
     if (!userinner) {
-      console.log("Couldn't find user with id", user.user_id);
       return {
         user_id: user.user_id,
         username: user.user_id,
@@ -240,8 +224,6 @@ const getScoresForWeek = async (week_id: string, group_id: string) => {
     return userinner;
   });
   const user_infos = await Promise.all(user_info_promises);
-
-  console.log('user_infos', user_infos);
 
   scores.forEach((user, index) => {
     user.user_id = user_infos.find(
