@@ -53,7 +53,7 @@ const addPicks = async (req: Request, res: Response) => {
   if (!picks.length) {
     //send 400 response with some message
     res.sendStatus(400);
-    console.log('No picks were sent');
+
     //write a message
     //res.sendStatus(401);
 
@@ -71,20 +71,17 @@ const addPicks = async (req: Request, res: Response) => {
   //validate that all picks have game_id, bet_id, and choice
   for (const pick of picks) {
     if (!pick.game_id) {
-      console.log('Missing game_id or bet_id');
       res.sendStatus(400);
       return;
     }
     //make sure bet_id is type of number
     if (typeof pick.bet_id !== 'number') {
-      console.log('bet_id must be a number');
       res.sendStatus(400);
       return;
     }
 
     //make sure typeof choice is a boolean
     if (typeof pick.pick !== 'boolean') {
-      console.log('Choice must be a boolean');
       res.sendStatus(400);
       return;
     }
@@ -96,7 +93,6 @@ const addPicks = async (req: Request, res: Response) => {
   const unique_bets = [...new Set(bet_ids)];
 
   if (unique_bets.length !== bet_ids.length) {
-    console.log('Duplicate bet_id');
     res.sendStatus(400);
     return;
   }
@@ -106,16 +102,13 @@ const addPicks = async (req: Request, res: Response) => {
   // 2. That the old game is not in the past [check for an entry with same week and bet_id]
   // 3. the new game is not in the past [and in this week]
   for (const pick of picks) {
-    console.log('pick', pick);
     if (!pick.game_id) {
-      console.log('Missing game_id or bet_id');
       res.sendStatus(400);
       return;
     }
 
     //make sure bet_id is type of number
     if (typeof pick.bet_id !== 'number') {
-      console.log('bet_id must be a number');
       res.sendStatus(400);
       return;
     }
@@ -140,13 +133,10 @@ const addPicks = async (req: Request, res: Response) => {
     // get the game corresponding to the old pick
     if (old_pick) {
       const game = games.find((game) => game.game_id === old_pick.game_id);
-      console.log('game', game);
-      console.log("old_pick['game_id']", old_pick['game_id']);
-      console.log('Games', games);
+
       //make sure the game is not in the past
       const old_kickoff = new Date(game.kickoff);
       if (old_kickoff < new Date()) {
-        console.log('Old game is in the past');
         //res.sendStatus(400);
         //return;
       }
@@ -156,7 +146,6 @@ const addPicks = async (req: Request, res: Response) => {
     const game = games.find((game) => game.game_id === pick.game_id);
     const new_kickoff = new Date(game.kickoff);
     if (new_kickoff < new Date()) {
-      console.log('New game is in the past');
       //addthis back later
       //res.sendStatus(400);
       //return;
@@ -215,7 +204,6 @@ const getCurrentWeekPicks = async (req: Request, res: Response) => {
 
     //res.send(picks);
   } catch (error) {
-    console.log('error', error);
     res.sendStatus(500);
   }
 };
@@ -384,13 +372,9 @@ const calculateScores = async (group_id: string, week_id: string) => {
     group_members.map((member) => member.user_id)
   );
 
-  console.log('picks', picks);
-
   const bets = await db(TableNames.Group_Table)
     .where('group_id', group_id)
     .first();
-
-  console.log('bets', bets);
 
   //bets is a json type column that encodes a list of bets
   const bets_json = bets[GroupTableColumns.bets];
@@ -408,11 +392,9 @@ const calculateScores = async (group_id: string, week_id: string) => {
     //filter out picks for games that are not finished
     .filter((pick) => {
       const game = games.find((game) => game.game_id === pick.game_id);
-      console.log('game', game);
+
       return game[GameTableColumns.finished];
     });
-
-  console.log('picks_with_bets', picks_with_bets);
 
   const scores = await Promise.all(
     picks_with_bets.map(async (pick) => {
@@ -452,7 +434,6 @@ const calculateScores = async (group_id: string, week_id: string) => {
           break;
         case 'moneyline':
           const money_line = game[GameTableColumns.moneyline];
-          console.log('money_line', money_line);
 
           //if home team won and money line is positive, then the points is greater than num_points
           if (
@@ -476,9 +457,6 @@ const calculateScores = async (group_id: string, week_id: string) => {
                 : (points = pick.bet.num_points * (100 / money_line));
           }
       }
-      console.log('points', points);
-      console.log('user_id', pick.user_id);
-      console.log('score', correct ? points : 0);
 
       return {
         week_id,
@@ -545,8 +523,6 @@ const calculateScoresForWeek = async (
       )
   );
 
-  console.log('picks', picks);
-
   const group = await db(TableNames.Group_Table)
     .where('group_id', group_id)
     .first();
@@ -564,12 +540,10 @@ const calculateScoresForWeek = async (
     //filter out picks for games that are not finished
     .filter((pick) => {
       const game = games.find((game) => game.game_id === pick.game_id);
-      console.log('game', game);
+
       if (!game) return false;
       return game.finished;
     });
-
-  console.log('picks_with_bets', picks_with_bets);
 
   if (!picks_with_bets.length) {
     return [];
@@ -604,7 +578,6 @@ const calculateScoresForWeek = async (
         break;
       case 'moneyline':
         const money_line = game.moneyline;
-        console.log('money_line', money_line);
 
         //if home team won and money line is positive, then the points is greater than num_points
         if (game.home_team_score > game.away_team_score) {
@@ -622,9 +595,6 @@ const calculateScoresForWeek = async (
               : (points = pick.bet.num_points * (100 / money_line));
         }
     }
-    console.log('points', points);
-    console.log('user_id', pick.user_id);
-    console.log('score', correct ? points : 0);
 
     //should jusit return a WeeklyScore
     if (!acc[pick.user_id]) {
@@ -657,8 +627,6 @@ const calculateWeeklyScores = async (
   );
 
   //
-
-  console.log('scores', scores);
 
   const scores_by_week = scores.map((scores_for_week, index) => {
     return {
@@ -725,8 +693,6 @@ const calculateScoresForGroupAllWeeks = async (group_id: string) => {
 
 const calculateScoresHandler = async (req: Request, res: Response) => {
   const { group_id } = req.params;
-
-  console.log('Hello from calculateScoresHandler');
 
   // const scores = await calculateScoresForGroupAllWeeks(group_id);
   const current_week_id = await getCurrentWeekId();

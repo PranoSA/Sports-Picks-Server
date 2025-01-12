@@ -37,7 +37,6 @@ const getGroups = async (req: Request, res: Response) => {
     )
     .where(GroupUserTableColumns.user_id, user_id)
     .select('*');
-  console.log('groups', groups);
 
   res.json(groups);
 };
@@ -66,20 +65,15 @@ const addGroup = async (req: Request, res: Response) => {
   try {
     //insert the group
     const { year_id } = await getCurrentYear();
-    console.log('year_id', year_id);
 
     const new_group = {
       ...group,
       year_id,
     };
 
-    console.log('new_group', new_group);
-
     const [group_id] = await trx(TableNames.Group_Table)
       .insert(new_group)
       .returning(GroupTableColumns.group_id);
-
-    console.log('group_id', group_id);
 
     const id_of_group = group_id[GroupTableColumns.group_id];
 
@@ -158,12 +152,6 @@ const joinGroup = async (req: Request, res: Response) => {
       .first();
 
     if (is_member) {
-      console.log(
-        'User is already a member of the group',
-        is_member,
-        user_id,
-        group_id
-      );
       //set "Already a member" status
       res.sendStatus(409);
       return;

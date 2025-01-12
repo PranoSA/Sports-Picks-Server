@@ -51,8 +51,6 @@ export const addWeeks = async (req: Request, res: Response): Promise<void> => {
   try {
     const weeks = req.body;
 
-    console.log('weeks', weeks);
-
     //check the proper properties exists for each week
     const validWeeks = weeks.every(
       (week: any) =>
@@ -78,7 +76,6 @@ export const addWeeks = async (req: Request, res: Response): Promise<void> => {
       .returning('*');
     res.status(201).json(newWeeks);
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: 'Server Error' });
   }
 };
@@ -91,13 +88,9 @@ export const deleteWeek = async (
   try {
     const { week_id, year_id } = req.params;
 
-    console.log('week_id', week_id);
-    console.log('year_id', year_id);
-
     await db(TableNames.Week_Table).where({ week_id, year_id }).del();
     res.status(204).send();
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: 'Server Error' });
   }
 };

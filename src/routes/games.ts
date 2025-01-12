@@ -40,12 +40,8 @@ const getCurrentWeekGames = async (req: Request, res: Response) => {
     .andWhere('end_date', '>=', current_date)
     .first();
 
-  console.log('week', week);
-
   //get games
   const games = await db(TableNames.Game_Table).where('week_id', week.week_id);
-
-  console.log('games', games);
 
   res.json(games);
 };
@@ -104,15 +100,12 @@ const submitFinalScore = async (req: Request, res: Response) => {
 };
 
 const getGamesByWeek = async (req: Request, res: Response) => {
-  console.log('getGamesByWeek');
   const { week_id } = req.params;
 
   const games = await db(TableNames.Game_Table).where(
     GameTableColumns.week_id,
     week_id
   );
-
-  console.log('games', games);
 
   res.json(games);
 };
