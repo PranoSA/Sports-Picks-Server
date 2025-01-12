@@ -157,6 +157,13 @@ const joinGroup = async (req: Request, res: Response) => {
       return;
     }
 
+    const pretending = res.locals.spretending;
+
+    if (pretending) {
+      res.sendStatus(403);
+      return;
+    }
+
     await db(TableNames.Group_User_Table).insert({
       group_id,
       user_id,

@@ -85,25 +85,6 @@ const auth_middleware: RequestHandler = async (
       [UserTableColumns.last_activity]: new Date(),
     };
 
-    //create an object with the columns of the user
-    const user_in_database = await db(TableNames.User_Table)
-      .where('user_id', res.locals.user)
-      .first();
-
-    // Check if any fields have changed or if the user is not in the database
-    if (
-      !user_in_database ||
-      user_in_database.username !== UserObject.username ||
-      user_in_database.user_id !== UserObject.user_id ||
-      new Date(user_in_database.last_login).getTime() + 2 * 60 * 1000 <
-        new Date().getTime()
-    ) {
-      await db(TableNames.User_Table)
-        .insert(UserObject)
-        .onConflict('user_id')
-        .merge(UserObject);
-    }
-
     //res.locals.email = decoded.payload.
 
     /*
@@ -134,6 +115,7 @@ const auth_middleware: RequestHandler = async (
         if (alt_uuid) {
           console.log("Alternative User's UUID", alt_uuid);
           res.locals.user = alt_uuid;
+          res.locals.spretending = true;
         }
       }
     }
@@ -158,6 +140,32 @@ const auth_middleware: RequestHandler = async (
     if (decoded.payload.preferred_username) {
       //@ts-ignore
       res.locals.username = decoded.payload.preferred_username;
+    }
+
+    const pretending = res.locals.spretending;
+
+    if (pretending) {
+      next();
+      return;
+    }
+
+    //create an object with the columns of the user
+    const user_in_database = await db(TableNames.User_Table)
+      .where('user_id', res.locals.user)
+      .first();
+
+    // Check if any fields have changed or if the user is not in the database
+    if (
+      !user_in_database ||
+      user_in_database.username !== UserObject.username ||
+      user_in_database.user_id !== UserObject.user_id ||
+      new Date(user_in_database.last_login).getTime() + 2 * 60 * 1000 <
+        new Date().getTime()
+    ) {
+      await db(TableNames.User_Table)
+        .insert(UserObject)
+        .onConflict('user_id')
+        .merge(UserObject);
     }
 
     next();
